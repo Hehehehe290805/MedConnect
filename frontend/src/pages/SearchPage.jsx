@@ -13,14 +13,16 @@ const SearchPage = () => {
       setLoading(true);
       setError(null);
 
+      const API_URL = import.meta.env.VITE_API_URL || "";
+
       const [doctorsRes, institutesRes] = await Promise.all([
-        fetch("http://localhost:5001/api/users/doctors", {
+        fetch(`${API_URL}/api/users/doctors`, {
           method: "GET",
-          credentials: "include", 
+          credentials: "include",
         }),
-        fetch("http://localhost:5001/api/users/institutes", {
+        fetch(`${API_URL}/api/users/institutes`, {
           method: "GET",
-          credentials: "include", 
+          credentials: "include",
         }),
       ]);
 
