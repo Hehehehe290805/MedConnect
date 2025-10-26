@@ -1,3 +1,7 @@
+import React, { useState, useEffect } from "react";
+import { SearchIcon, AlertCircleIcon } from "lucide-react"; // assuming you use these
+import FriendCard from "../components/FriendCard.jsx"; // adjust path if needed
+
 const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -9,14 +13,16 @@ const SearchPage = () => {
       setLoading(true);
       setError(null);
 
+      const API_URL = import.meta.env.VITE_API_URL || "";
+
       const [doctorsRes, institutesRes] = await Promise.all([
-        fetch("http://localhost:5001/api/users/doctors", {
+        fetch(`${API_URL}/api/users/doctors`, {
           method: "GET",
-          credentials: "include", 
+          credentials: "include",
         }),
-        fetch("http://localhost:5001/api/users/institutes", {
+        fetch(`${API_URL}/api/users/institutes`, {
           method: "GET",
-          credentials: "include", 
+          credentials: "include",
         }),
       ]);
 
