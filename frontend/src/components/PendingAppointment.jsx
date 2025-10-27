@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }) => {
   const navigate = useNavigate();
@@ -17,9 +17,6 @@ const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }
   const [patient, setPatient] = useState(null);
   const [institute, setInstitute] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
-
   // Fetch doctor/patient/institute info based on role
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -31,30 +28,19 @@ const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }
               ? appointment.doctorId 
               : appointment.doctorId._id;
             
-            const res = await axios.get(`${API_URL}/api/users/${doctorIdStr}`, {
-              withCredentials: true
-            });
+            const res = await axiosInstance.get(`/users/${doctorIdStr}`);
+
             setDoctor(res.data.data);
-          } else if (appointment.instituteId) {
-            const instituteIdStr = typeof appointment.instituteId === "string"
-              ? appointment.instituteId
-              : appointment.instituteId._id;
-            
-            const res = await axios.get(`${API_URL}/api/users/${instituteIdStr}`, {
-              withCredentials: true
-            });
-            setInstitute(res.data.data);
           }
-        } else if (authUser?.role === "doctor" || authUser?.role === "institute") {
+        } else if (authUser?.role === "doctor") {
           // Doctor/Institute needs patient info
           if (appointment.patientId) {
             const patientIdStr = typeof appointment.patientId === "string"
               ? appointment.patientId
               : appointment.patientId._id;
             
-            const res = await axios.get(`${API_URL}/api/users/${patientIdStr}`, {
-              withCredentials: true
-            });
+            const res = await axiosInstance.get(`/users/${patientIdStr}`);
+
             setPatient(res.data.data);
           }
         }
@@ -189,11 +175,9 @@ const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }
     setError(null);
 
     try {
-      await axios.post(
-        `${API_URL}/api/booking/report/${appointment._id}`,
-        { complaint: complaint.trim() },
-        { withCredentials: true }
-      );
+      await axiosInstance.post(`/booking/report/${appointment._id}`, {
+        complaint: complaint.trim(),
+      });
 
       alert("Report submitted successfully");
       setIsReporting(false);
@@ -213,8 +197,6 @@ const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }
   // Check if video call button should show
   const showVideoButton = appointment.status === "ongoing" && appointment.videoCallLink;
   
-  console.log("Show Video Button?", showVideoButton); // DEBUG
-
   return (
     <div className="card bg-base-100 shadow-lg">
       <div className="card-body">

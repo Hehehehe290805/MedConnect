@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const ViewPendingReportPopup = ({ report, onClose, onReportResolved }) => {
     const [loading, setLoading] = useState(false);
@@ -21,21 +21,12 @@ const ViewPendingReportPopup = ({ report, onClose, onReportResolved }) => {
             setError(null);
             setSuccess(false);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.patch(
-                `${API_URL}/api/admin/resolve`,
-                {
-                    complaintId: report._id,
-                    outcome,
-                    adminNote
-                },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            const res = await axiosInstance.patch("/admin/resolve", {
+                complaintId: report._id,
+                outcome,
+                adminNote
+            });
+
 
             if (res.data.success) {
                 setSuccess(true);

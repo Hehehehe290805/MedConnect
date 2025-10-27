@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+import { axiosInstance } from "../lib/axios";
 
 const PendingClaim = ({ claim, onClaimApproved, onViewDetails }) => {
     const [loading, setLoading] = useState(false);
@@ -10,12 +10,9 @@ const PendingClaim = ({ claim, onClaimApproved, onViewDetails }) => {
             setLoading(true);
             setError(null);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.patch(
-                `${API_URL}/api/admin/approve-claim`,
-                { claimId: claim._id },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.patch("/admin/approve-claim", {
+                claimId: claim._id,
+            });
 
             if (res.data.success) {
                 if (onClaimApproved) {

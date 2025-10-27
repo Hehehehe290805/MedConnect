@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAuthUser from "../hooks/useAuthUser.js";
 import { Trash2Icon, AlertTriangleIcon, XIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../lib/axios.js";
 
 const SettingsPage = () => {
   const { authUser } = useAuthUser();
@@ -22,10 +23,8 @@ const SettingsPage = () => {
   // Delete account mutation
   const { mutate: deleteAccount, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await fetch("http://localhost:5001/api/auth/delete-me", {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await axiosInstance.delete("/auth/delete-me");
+
 
       if (!response.ok) {
         const error = await response.json();

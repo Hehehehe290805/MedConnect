@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const SuggestPopup = ({ onClose }) => {
     const [type, setType] = useState("specialty"); // specialty or subspecialty
@@ -14,8 +14,7 @@ const SuggestPopup = ({ onClose }) => {
         // Fetch verified specialties for the rootSpecialty dropdown
         const fetchSpecialties = async () => {
             try {
-                const API_URL = import.meta.env.VITE_API_URL || "";
-                const res = await axios.get(`${API_URL}/api/specialties-and-services/specialties`, { withCredentials: true });
+                const res = await axiosInstance.get("/specialties-and-services/specialties");
                 setSpecialties(res.data.items || []);
             } catch (err) {
                 console.error("Error fetching specialties:", err);
@@ -32,11 +31,10 @@ const SuggestPopup = ({ onClose }) => {
         setLoading(true);
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "";
             const payload = { name, type };
             if (type === "subspecialty") payload.rootSpecialtyId = rootSpecialty;
 
-            const res = await axios.post(`${API_URL}/api/specialties-and-services/suggest`, payload, { withCredentials: true });
+            const res = await axiosInstance.post("/specialties-and-services/suggest", payload);
             setSuccess(res.data.message);
             setName("");
             setRootSpecialty("");

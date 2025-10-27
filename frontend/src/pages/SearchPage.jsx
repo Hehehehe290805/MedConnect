@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SearchIcon, AlertCircleIcon } from "lucide-react";
 import FriendCard from "../components/FriendCard.jsx";
 import FilterSearch from "../components/FilterSearch.jsx";
+import { axiosInstance } from "../lib/axios.js";
 
 const SearchPage = () => {
   const [loading, setLoading] = useState(false);
@@ -16,15 +17,10 @@ const SearchPage = () => {
       setError(null);
 
       const [doctorsRes, institutesRes] = await Promise.all([
-        fetch("http://localhost:5001/api/users/doctors", {
-          method: "GET",
-          credentials: "include",
-        }),
-        fetch("http://localhost:5001/api/users/institutes", {
-          method: "GET",
-          credentials: "include",
-        }),
+        axiosInstance.get("/users/doctors"),
+        axiosInstance.get("/users/institutes"),
       ]);
+
 
       if (!doctorsRes.ok || !institutesRes.ok) {
         const errText = `${!doctorsRes.ok ? "Doctors" : ""} ${

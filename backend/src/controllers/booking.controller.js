@@ -323,8 +323,6 @@ export const fileComplaint = async (req, res) => {
         const userId = req.user.id || req.user._id;
         const { complaint } = req.body;
 
-        console.log("Filing complaint:", { appointmentId, userId, complaint });
-
         if (!complaint || !complaint.trim()) {
             return res.status(400).json({ message: "Complaint message is required." });
         }
@@ -378,8 +376,6 @@ export const fileComplaint = async (req, res) => {
             filedAgainst: againstId,
         });
         await report.save();
-
-        console.log("Complaint filed successfully:", report._id);
 
         res.status(201).json({ message: "Complaint filed successfully." });
     } catch (error) {
@@ -557,9 +553,6 @@ export const checkStartedAppointments = async () => {
     .populate('doctorId', '_id')
     .populate('patientId', '_id');
 
-    if (appointments.length > 0) {
-      console.log(`[CRON] Found ${appointments.length} appointments to mark as ongoing`);
-    }
 
     for (const appointment of appointments) {
       try {
@@ -577,8 +570,6 @@ export const checkStartedAppointments = async () => {
         appointment.videoCallLink = callUrl;
         await appointment.save();
         
-        console.log(`[CRON] ✅ Marked appointment ${appointment._id} as ongoing`);
-        console.log(`[CRON] 🎥 Video call link: ${callUrl}`);
       } catch (err) {
         console.error(`[CRON] ❌ Error updating appointment ${appointment._id}:`, err);
       }

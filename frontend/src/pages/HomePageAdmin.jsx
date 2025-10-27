@@ -8,7 +8,7 @@ import ViewPendingUserPopup from "./ViewPendingUserPopup.jsx";
 import ViewPendingSuggestionPopup from "./ViewPendingSuggestionPopup.jsx";
 import ViewPendingClaimPopup from "./ViewPendingClaimPopup.jsx";
 import ViewPendingReportPopup from "./ViewPendingReportPopup.jsx";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios.js";
 
 const HomePageAdmin = () => {
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -38,11 +38,8 @@ const HomePageAdmin = () => {
     const fetchPendingUsers = async () => {
         try {
             setLoading(prev => ({ ...prev, users: true }));
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/admin/pending-users`, {
-                withCredentials: true,
-            });
-            console.log("Fetched pending users:", res.data);
+            const res = await axiosInstance.get("/admin/pending-users");
+
             setPendingUsers(res.data.users || []);
         } catch (err) {
             console.error("Error fetching pending users:", err);
@@ -54,11 +51,8 @@ const HomePageAdmin = () => {
     const fetchPendingSuggestions = async () => {
         try {
             setLoading(prev => ({ ...prev, suggestions: true }));
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/admin/pending-suggestions`, {
-                withCredentials: true,
-            });
-            console.log("Fetched pending suggestions:", res.data);
+            const res = await axiosInstance.get("/admin/pending-suggestions");
+
             if (res.data.success && Array.isArray(res.data.pendingSuggestions)) {
                 setPendingSuggestions(res.data.pendingSuggestions);
             } else {
@@ -74,11 +68,8 @@ const HomePageAdmin = () => {
     const fetchPendingClaims = async () => {
         try {
             setLoading(prev => ({ ...prev, claims: true }));
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/admin/pending-claims`, {
-                withCredentials: true,
-            });
-            console.log("Fetched pending claims:", res.data);
+            const res = await axiosInstance.get("/admin/pending-claims");
+
             if (res.data.success && res.data.claims) {
                 // Combine all claim types
                 const allClaims = [
@@ -101,12 +92,9 @@ const HomePageAdmin = () => {
         try {
             setLoading(prev => ({ ...prev, reports: true }));
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/admin/complaints`, {
-                withCredentials: true,
-            });
+            const res = await axiosInstance.get("/admin/complaints");
 
-            console.log("Fetched pending reports:", res.data);
+
 
             if (res.data.success && Array.isArray(res.data.complaints)) {
                 setPendingReports(res.data.complaints);

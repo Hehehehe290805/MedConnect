@@ -14,6 +14,7 @@ import {
   MessageCircleIcon,
 } from "lucide-react";
 import useAuthUser from "../hooks/useAuthUser.js";
+import { axiosInstance } from "../lib/axios.js";
 
 const OtherProfilePage = () => {
   const { id: userId } = useParams(); // Get userId from URL (matches ChatPage pattern)
@@ -48,10 +49,8 @@ const OtherProfilePage = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:5001/api/users/${targetUserId}`, {
-          method: "GET",
-          credentials: "include",
-        });
+        const response = await axiosInstance.get(`/users/${targetUserId}`);
+
 
         if (!response.ok) {
           throw new Error("Failed to fetch user profile");
@@ -82,15 +81,12 @@ const OtherProfilePage = () => {
         setQrLoading(true);
         setQrError(false);
       
-        const response = await fetch(`http://localhost:5001/api/gcash-setup/gcash/qr/${user._id}`, {
-          credentials: "include",
-        });
+        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${user._id}`);
 
-        console.log('QR Response status:', response.status);
+
 
         if (response.ok) {
           const blob = await response.blob();
-          console.log('QR Blob type:', blob.type);
           
           const imageUrl = URL.createObjectURL(blob);
           setQrImageUrl(imageUrl);

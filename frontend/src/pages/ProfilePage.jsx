@@ -13,6 +13,7 @@ import {
   ArrowLeftIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../lib/axios.js";
 
 
 const ProfilePage = () => {
@@ -31,7 +32,7 @@ const ProfilePage = () => {
       try {
         setQrLoading(true);
         setQrError(false);
-        const response = await fetch("http://localhost:5001/api/gcash-setup/gcash/qr/" + authUser._id);
+        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${authUser._id}`);
 
         if (response.ok) {
           const blob = await response.blob();

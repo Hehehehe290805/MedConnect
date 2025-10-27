@@ -142,9 +142,6 @@ const FriendCard = ({ friend }) => {
   };
 
   const handleBookingCreated = (appointment) => {
-    console.log("Appointment created:", appointment);
-    // You can add any post-booking logic here
-    // Like showing a success message, updating state, or redirecting
   };
 
   return (

@@ -91,12 +91,10 @@ export async function getUserById(userId) {
 export const uploadGCashQR = async (formData) => {
   try {
 
-    const response = await fetch('http://localhost:5001/api/gcash-setup/gcash/upload', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
-
+    const response = await axiosInstance.post(
+      "/gcash-setup/gcash/upload",
+      formData
+    );
 
     // Get the response as text first to see what we're getting
     const responseText = await response.text();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 
 const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointmentUpdated }) => {
@@ -32,7 +32,6 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
   };
 
   const { date, time } = formatDateTime(appointment.start);
-  const API_URL = import.meta.env.VITE_API_URL || "";
 
   // --- FETCH PATIENT INFO ---
   useEffect(() => {
@@ -44,9 +43,8 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
         : appointment.patientId._id;
 
       try {
-        const res = await axios.get(`${API_URL}/api/users/${patientId}`, {
-          withCredentials: true
-        });
+        const res = await axiosInstance.get(`/users/${patientId}`);
+
         setPatient(res.data.data);
       } catch (err) {
         console.error("Failed to fetch patient info:", err);
@@ -63,11 +61,10 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(
-        `${API_URL}/api/doctor-schedule/confirm`,
-        { appointmentId: appointment._id },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/doctor-schedule/confirm", {
+        appointmentId: appointment._id,
+      });
+
 
       if (res.data.success) {
         toast.success("Appointment accepted. Awaiting patient deposit.");
@@ -94,14 +91,11 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(
-        `${API_URL}/api/doctor-schedule/reject`,
-        {
-          appointmentId: appointment._id,
-          reason: rejectReason || "No reason provided"
-        },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/doctor-schedule/reject", {
+        appointmentId: appointment._id,
+        reason: rejectReason || "No reason provided",
+      });
+
 
       if (res.data.success) {
         toast.success("Appointment rejected");
@@ -124,11 +118,10 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(
-        `${API_URL}/api/doctor-schedule/confirm-deposit`,
-        { appointmentId: appointment._id },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/doctor-schedule/confirm-deposit", {
+        appointmentId: appointment._id,
+      });
+
 
       if (res.data.success) {
         toast.success("Deposit confirmed successfully");
@@ -147,13 +140,8 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
   const handleAttend = async () => {
     try {
       setLoading(true);
-      const API_URL = import.meta.env.VITE_API_URL || "";
-      const res = await axios.post(
-        `${API_URL}/api/booking/attend/${appointment._id}`,
-        {},
-        { withCredentials: true }
-      );
-      console.log("Attendance/Completion marked:", res.data.message);
+      const res = await axiosInstance.post(`/booking/attend/${appointment._id}`, {});
+
       onAppointmentUpdated(res.data.appointment);
     } catch (err) {
     } finally {
@@ -168,11 +156,10 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(
-        `${API_URL}/api/doctor-schedule/mark-complete`,
-        { appointmentId: appointment._id },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/doctor-schedule/mark-complete", {
+        appointmentId: appointment._id,
+      });
+
 
       if (res.data.success) {
         toast.success("Appointment marked as complete");
@@ -194,11 +181,10 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
       setLoading(true);
       setError(null);
 
-      const res = await axios.post(
-        `${API_URL}/api/doctor-schedule/confirm-full-payment`,
-        { appointmentId: appointment._id },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/doctor-schedule/confirm-full-payment", {
+        appointmentId: appointment._id,
+      });
+
 
       if (res.data.success) {
         toast.success("Balance payment confirmed successfully");

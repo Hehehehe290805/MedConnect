@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 import dayjs from "dayjs";
 
 const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
@@ -9,25 +9,19 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [pricing, setPricing] = useState(null);
 
-    const API_URL = import.meta.env.VITE_API_URL || "";
 
     // 🏷 Fetch doctor's pricing
     useEffect(() => {
         const fetchPricing = async () => {
             try {
-                const res = await axios.get(
-                    `${API_URL}/api/pricing/pricing?providerId=${provider._id}`,
-                    { withCredentials: true }
+                const res = await axiosInstance.get(
+                    `/pricing/pricing?providerId=${provider._id}`
                 );
-                console.log("🧾 Pricing API response:", res.data);
 
                 // ✅ Fix: Check directly for pricing array, not success flag
                 if (Array.isArray(res.data.pricing) && res.data.pricing.length > 0) {
                     setPricing(res.data.pricing[0]);
-                    console.log("✅ Pricing set:", res.data.pricing[0]);
-                } else {
-                    console.log("⚠️ No pricing found for provider", provider._id);
-                }
+                } 
             } catch (err) {
                 console.error("❌ Error fetching pricing:", err);
             }
@@ -40,9 +34,8 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
     useEffect(() => {
         const fetchAvailableSlots = async () => {
             try {
-                const res = await axios.get(
-                    `${API_URL}/api/doctor-schedule/public-doctor-calendar?doctorId=${provider._id}&daysAhead=2`,
-                    { withCredentials: true }
+                const res = await axiosInstance.get(
+                    `/doctor-schedule/public-doctor-calendar?doctorId=${provider._id}&daysAhead=2`
                 );
 
                 if (res.data.success) {
@@ -84,11 +77,8 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                 start: selectedSlot.start,
             };
 
-            const res = await axios.post(
-                `${API_URL}/api/booking/book`,
-                bookingData,
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.post("/booking/book", bookingData);
+
 
             if (res.data.message === "Appointment booked successfully.") {
                 onBookingCreated(res.data.appointment);

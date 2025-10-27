@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import { axiosInstance } from "../lib/axios";
 
 const PendingSuggestion = ({ suggestion, onSuggestionApproved, onViewDetails }) => {
     const [loading, setLoading] = useState(false);
@@ -11,10 +11,8 @@ const PendingSuggestion = ({ suggestion, onSuggestionApproved, onViewDetails }) 
             // Only fetch if type is subspecialty
             if (suggestion.type === "subspecialty" && suggestion._id) {
                 try {
-                    const API_URL = import.meta.env.VITE_API_URL || "";
-                    const res = await axios.get(
-                        `${API_URL}/api/specialties-and-services/subspecialty-root/${suggestion._id}`,
-                        { withCredentials: true }
+                    const res = await axiosInstance.get(
+                        `/specialties-and-services/subspecialty-root/${suggestion._id}`
                     );
 
                     // Set name if available
@@ -34,12 +32,9 @@ const PendingSuggestion = ({ suggestion, onSuggestionApproved, onViewDetails }) 
             setLoading(true);
             setError(null);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.patch(
-                `${API_URL}/api/admin/approve`,
-                { id: suggestion._id },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.patch("/admin/approve", {
+                id: suggestion._id,
+            });
 
             if (res.data.message && onSuggestionApproved) {
                 onSuggestionApproved(suggestion._id);

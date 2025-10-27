@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [claimType, setClaimType] = useState("specialty");
@@ -9,7 +9,6 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = import.meta.env.VITE_API_URL || "";
 
     useEffect(() => {
         fetchSpecialties();
@@ -26,7 +25,7 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const fetchSpecialties = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/specialties-and-services/specialties`, { withCredentials: true });
+            const res = await axiosInstance.get("/specialties-and-services/specialties");
             setSpecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching specialties:", err);
@@ -38,7 +37,7 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const fetchSubspecialties = async (specialtyId) => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/specialties-and-services/subspecialties/${specialtyId}`, { withCredentials: true });
+            const res = await axiosInstance.get(`/specialties-and-services/subspecialties/${specialtyId}`);
             setSubspecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching subspecialties:", err);
@@ -50,10 +49,11 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const handleClaim = async () => {
         if (!selectedItem) return alert("Please select an item to claim.");
         try {
-            await axios.post(`${API_URL}/api/specialties-and-services/claim`, {
+            await axiosInstance.post("/specialties-and-services/claim", {
                 targetId: selectedItem._id,
                 type: claimType,
-            }, { withCredentials: true });
+            });
+
             alert(`Successfully claimed ${claimType}!`);
             onClose();
         } catch (err) {

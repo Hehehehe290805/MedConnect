@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const ViewPendingClaimPopup = ({ claim, onClose, onClaimApproved }) => {
     const [loading, setLoading] = useState(false);
@@ -16,18 +16,13 @@ const ViewPendingClaimPopup = ({ claim, onClose, onClaimApproved }) => {
             if (claim.doctorId) {
                 try {
                     setLicenseLoading(true);
-                    const API_URL = import.meta.env.VITE_API_URL || "";
                     const userId = claim.doctorId._id || claim.doctorId;
 
-                    console.log("Fetching license for user:", userId);
 
                     // Use the new admin license endpoint
-                    const res = await axios.get(
-                        `${API_URL}/api/admin/license/${userId}`, // Note: using /license/:userId
-                        { withCredentials: true }
-                    );
+                    const res = await axiosInstance.get(`/admin/license/${userId}`);
 
-                    console.log("License API response:", res.data);
+
 
                     if (res.data.licenseNumber) {
                         setLicenseNumber(res.data.licenseNumber);
@@ -58,12 +53,8 @@ const ViewPendingClaimPopup = ({ claim, onClose, onClaimApproved }) => {
             setError(null);
             setSuccess(false);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.patch(
-                `${API_URL}/api/admin/approve-claim`,
-                { claimId: claim._id },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.patch("/admin/approve-claim", { claimId: claim._id });
+
 
             if (res.data.success) {
                 setSuccess(true);

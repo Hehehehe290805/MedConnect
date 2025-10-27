@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast"; // ✅ ADD THIS IMPORT
 
 const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
@@ -12,7 +12,6 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
   const [loading, setLoading] = useState(false);
 
   const handleBalanceRefChange = (e) => setBalanceRef(e.target.value);
-  const API_URL = import.meta.env.VITE_API_URL || "";
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -23,16 +22,16 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
           ? appointment.doctorId
           : appointment.doctorId._id || appointment.doctorId.toString();
 
-        const res = await axios.get(`${API_URL}/api/users/${doctorIdStr}`, {
-          withCredentials: true
-        });
+        const res = await axiosInstance.get(`/users/${doctorIdStr}`);
+
 
         setDoctor(res.data.data);
 
         // Fetch GCash QR if available
         if (res.data.data.gcash?.qrData) {
-          setQrUrl(`${API_URL}/api/gcash-setup/gcash/qr/${doctorIdStr}`);
+          setQrUrl(`${import.meta.env.VITE_API_URL}/api/gcash-setup/gcash/qr/${doctorIdStr}`);
         }
+
       } catch (err) {
         console.error("Failed to fetch doctor info:", err);
         toast.error("Failed to load doctor information"); // ✅ TOAST
@@ -67,13 +66,8 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
   const handleAttend = async () => {
     try {
       setLoading(true);
-      const API_URL = import.meta.env.VITE_API_URL || "";
-      const res = await axios.post(
-        `${API_URL}/api/booking/attend/${appointment._id}`,
-        {},
-        { withCredentials: true }
-      );
-      console.log("Attendance/Completion marked:", res.data.message);
+      const res = await axiosInstance.post(`/booking/attend/${appointment._id}`, {});
+
       onAppointmentUpdated(res.data.appointment);
     } catch (err) {
     } finally {
@@ -89,14 +83,11 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/booking/pay-deposit`,
-        {
-          appointmentId: appointment._id,
-          referenceNumber: gcashRef,
-        },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/booking/pay-deposit", {
+        appointmentId: appointment._id,
+        referenceNumber: gcashRef,
+      });
+
 
       if (res.data.success) {
         toast.success(res.data.message || "Deposit payment submitted successfully"); // ✅ TOAST
@@ -119,14 +110,11 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/booking/pay-remaining`,
-        {
-          appointmentId: appointment._id,
-          referenceNumber: balanceRef,
-        },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/booking/pay-remaining", {
+        appointmentId: appointment._id,
+        referenceNumber: balanceRef,
+      });
+
 
       if (res.data.success) {
         toast.success(res.data.message || "Balance payment submitted successfully"); // ✅ TOAST
@@ -144,13 +132,10 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
   const handleComplete = async () => {
     try {
       setLoading(true);
-      const API_URL = import.meta.env.VITE_API_URL || "";
-      const res = await axios.post(
-        `${API_URL}/api/booking/complete-appointment`,
-        { appointmentId: appointment._id },
-        { withCredentials: true }
-      );
-      console.log("Appointment completed:", res.data.message);
+      const res = await axiosInstance.post("/booking/complete-appointment", {
+        appointmentId: appointment._id,
+      });
+
 
       // Update parent state or refresh data
       if (onAppointmentUpdated) {
@@ -171,15 +156,12 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/booking/submit-review`,
-        {
-          appointmentId: appointment._id,
-          rating,
-          review: review.trim() || "",
-        },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/booking/submit-review", {
+        appointmentId: appointment._id,
+        rating,
+        review: review.trim() || "",
+      });
+
 
       if (res.data.success) {
         toast.success("Review submitted successfully"); // ✅ TOAST

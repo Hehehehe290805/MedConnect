@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios.js";
 import PendingAppointment from "../components/PendingAppointment.jsx";
 import ViewPendingAppointmentDoctorPopup from "./ViewPendingAppointmentDoctorPopup.jsx";
 import SetPricePopup from "./SetPricePopup.jsx";
@@ -30,8 +30,7 @@ const HomePageDoctor = () => {
         try {
             setLoading(true);
             setError(null);
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/booking/user-appointments`, { withCredentials: true });
+            const res = await axiosInstance.get("/booking/user-appointments");
 
             if (res.data.success && Array.isArray(res.data.appointments)) {
                 const validStatuses = [
@@ -60,8 +59,7 @@ const HomePageDoctor = () => {
     const fetchCurrentPricing = async () => {
         try {
             setPriceLoading(true);
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/pricing/pricing`, { withCredentials: true });
+            const res = await axiosInstance.get("/pricing/pricing");
             if (res.data.pricing && res.data.pricing.length > 0) {
                 setCurrentPrice(res.data.pricing[0].price);
             }
@@ -74,8 +72,7 @@ const HomePageDoctor = () => {
 
     const fetchCurrentSchedule = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/doctor-schedule/get-availability`, { withCredentials: true });
+            const res = await axiosInstance.get("/doctor-schedule/get-availability");
             if (res.data.success && res.data.availability) {
                 setCurrentSchedule(res.data.availability);
                 setWorkTime(formatScheduleDisplay(res.data.availability));
@@ -114,8 +111,7 @@ const HomePageDoctor = () => {
     const handleSetWorkTime = () => setShowSchedulePopup(true);
     const handleScheduleSet = async (schedule) => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.post(`${API_URL}/api/doctor-schedule/availability`, schedule, { withCredentials: true });
+            const res = await axiosInstance.post("/doctor-schedule/availability", schedule);
             if (res.data.success) {
                 setCurrentSchedule(res.data.availability);
                 setWorkTime(formatScheduleDisplay(res.data.availability));
