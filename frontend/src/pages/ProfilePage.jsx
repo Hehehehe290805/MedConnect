@@ -7,8 +7,6 @@ import {
   GlobeIcon,
   CreditCardIcon,
   PhoneIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   AlertCircleIcon,
   ArrowLeftIcon,
 } from "lucide-react";
@@ -32,15 +30,14 @@ const ProfilePage = () => {
       try {
         setQrLoading(true);
         setQrError(false);
-        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${authUser._id}`);
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const imageUrl = URL.createObjectURL(blob);
-          setQrImageUrl(imageUrl);
-        } else {
-          setQrError(true);
-        }
+        // Tell Axios you want a blob
+        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${authUser._id}`, {
+          responseType: "blob",
+        });
+
+        const imageUrl = URL.createObjectURL(response.data);
+        setQrImageUrl(imageUrl);
       } catch (error) {
         console.error("Error fetching QR code:", error);
         setQrError(true);
