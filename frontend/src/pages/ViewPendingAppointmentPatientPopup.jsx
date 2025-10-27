@@ -77,8 +77,6 @@ const ViewPendingAppointmentPatientPopup = ({ appointment, onClose }) => {
         onClose();
       }, 500);
     } catch (err) {
-      console.error("Error marking attendance:", err);
-      toast.error(err.response?.data?.message || "Failed to mark attendance");
     } finally {
       setLoading(false);
     }
