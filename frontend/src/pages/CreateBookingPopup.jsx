@@ -2,6 +2,11 @@ import { useState, useEffect } from "react";
 import { axiosInstance } from "../lib/axios";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
     const [loading, setLoading] = useState(false);
@@ -9,9 +14,24 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [pricing, setPricing] = useState(null);
+    const [appointmentServiceId, setAppointmentServiceId] = useState(null);
 
+    useEffect(() => {
+        const fetchAppointmentService = async () => {
+            try {
+                const res = await axiosInstance.get("/pricing/pricing", {
+                    params: { serviceName: "Appointment" }
+                });
+                const service = res.data.pricing?.find(p => p.serviceId.name === "Appointment");
+                if (service) setAppointmentServiceId(service.serviceId._id);
+            } catch (err) {
+                console.error("Failed to fetch Appointment service:", err);
+            }
+        };
 
-    // 🏷 Fetch doctor's pricing
+        fetchAppointmentService();
+    }, []);
+
     useEffect(() => {
         const fetchPricing = async () => {
             try {
@@ -19,10 +39,9 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                     `/pricing/pricing?providerId=${provider._id}`
                 );
 
-                // ✅ Fix: Check directly for pricing array, not success flag
                 if (Array.isArray(res.data.pricing) && res.data.pricing.length > 0) {
                     setPricing(res.data.pricing[0]);
-                } 
+                }
             } catch (err) {
                 console.error("❌ Error fetching pricing:", err);
             }
@@ -31,7 +50,6 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
         if (provider?._id) fetchPricing();
     }, [provider]);
 
-    // 📅 Fetch available slots from backend (public calendar)
     useEffect(() => {
         const fetchAvailableSlots = async () => {
             try {
@@ -40,13 +58,18 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                 );
 
                 if (res.data.success) {
+
                     const available = res.data.events
                         .filter(e => e.type === "availability")
-                        .map(e => ({
-                            start: e.start,
-                            end: e.end,
-                            display: dayjs(e.start).format("ddd, MMM D, h:mm A"),
-                        }));
+                        .map(e => {
+                            const slotTime = dayjs(e.start);
+                            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slotTime.day()];
+                            return {
+                                start: e.start,
+                                end: e.end,
+                                display: dayjs(e.start).format("ddd, MMM D, h:mm A"),
+                            };
+                        });
 
                     setAvailableSlots(available);
                 }
@@ -67,37 +90,46 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
             return;
         }
 
+        if (!appointmentServiceId) {
+            setError("Service information not loaded yet. Please try again.");
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
+            // 🚨 FIX: Send the time exactly as received from available slots
+            // The backend expects Manila time with timezone offset
+            const startTime = selectedSlot.start;
+
             const bookingData = {
                 doctorId: provider._id,
-                serviceId: "appointment",
-                start: selectedSlot.start,
+                serviceId: appointmentServiceId,
+                start: startTime, // Send exactly as received
             };
+
 
             const res = await axiosInstance.post("/booking/book", bookingData);
 
             if (res.data.message === "Appointment booked successfully.") {
                 toast.success("Appointment booked successfully!");
-
                 if (typeof onBookingCreated === "function") {
                     onBookingCreated(res.data.appointment);
                 }
-
-                // Close the modal immediately
                 onClose();
             }
         } catch (err) {
-            console.error("Booking error:", err);
-            setError(err.response?.data?.message || "Failed to book appointment. Please try again.");
+            console.error("❌ Booking error:", err);
+            console.error("Backend error details:", err.response?.data);
+
+            const errorMsg = err.response?.data?.message || "Failed to book appointment. Please try again.";
+            setError(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
     };
-
-
 
     const getProviderName = () =>
         provider.role === "doctor"
@@ -116,6 +148,9 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                 <div className="bg-base-200 p-4 rounded-lg mb-4">
                     <h3 className="font-semibold">{getProviderName()}</h3>
                     <p className="text-sm text-gray-600">{provider.profession || "Doctor"}</p>
+                    {!appointmentServiceId && (
+                        <p className="text-sm text-yellow-600 mt-1">Loading service info...</p>
+                    )}
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -152,7 +187,7 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500">Loading available slots.</p>
+                            <p className="text-sm text-gray-500">Loading available slots...</p>
                         )}
                     </div>
 
@@ -194,7 +229,7 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={loading || !selectedSlot}
+                            disabled={loading || !selectedSlot || !appointmentServiceId}
                         >
                             {loading ? (
                                 <>

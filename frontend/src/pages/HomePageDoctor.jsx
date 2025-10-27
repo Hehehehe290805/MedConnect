@@ -4,6 +4,7 @@ import PendingAppointment from "../components/PendingAppointment.jsx";
 import ViewPendingAppointmentDoctorPopup from "./ViewPendingAppointmentDoctorPopup.jsx";
 import SetPricePopup from "./SetPricePopup.jsx";
 import SetSchedulePopup from "./SetSchedulePopup.jsx";
+import toast from "react-hot-toast";
 
 const HomePageDoctor = () => {
     const [appointments, setAppointments] = useState([]);
@@ -21,8 +22,8 @@ const HomePageDoctor = () => {
 
     useEffect(() => {
         fetchAppointments();
-        fetchCurrentPricing();
-        fetchCurrentSchedule();
+        fetchCurrentSchedule();    
+        fetchCurrentPrice();
     }, []);
 
     // === Fetch functions ===
@@ -56,17 +57,14 @@ const HomePageDoctor = () => {
         }
     };
 
-    const fetchCurrentPricing = async () => {
+    const fetchCurrentPrice = async () => {
         try {
-            setPriceLoading(true);
-            const res = await axiosInstance.get("/pricing/pricing");
-            if (res.data.pricing && res.data.pricing.length > 0) {
-                setCurrentPrice(res.data.pricing[0].price);
-            }
+            const res = await axiosInstance.get("/pricing/appointment-price");
+            const price = res.data.pricing?.[0]?.price ?? null;
+            setCurrentPrice(price);
         } catch (err) {
-            console.error("Error fetching pricing:", err);
-        } finally {
-            setPriceLoading(false);
+            console.error("Error fetching current price:", err);
+            toast.error("Failed to fetch current price");
         }
     };
 
@@ -106,7 +104,31 @@ const HomePageDoctor = () => {
 
     // === Handlers ===
     const handleSetNewPrice = () => setShowPricePopup(true);
-    const handlePriceSet = (newPrice) => setCurrentPrice(newPrice);
+    const handlePriceSet = async (newPrice) => {
+        try {
+            await axiosInstance.post("/pricing/set-pricing", { price: newPrice });
+
+            const res = await axiosInstance.get("/pricing/appointment-price");
+
+            const confirmedPrice = res.data.pricing?.[0]?.price;
+
+            if (confirmedPrice !== undefined) {
+                setCurrentPrice(confirmedPrice);
+                toast.success(`Price updated to ₱${confirmedPrice}`);
+            } else {
+                setCurrentPrice(null);
+                toast.success("Price updated (no price found in DB)");
+            }
+
+            setShowPricePopup(false);
+
+        } catch (err) {
+            console.error("Error updating price:", err);
+            toast.error("Failed to update price");
+        }
+    };
+
+
 
     const handleSetWorkTime = () => setShowSchedulePopup(true);
     const handleScheduleSet = async (schedule) => {

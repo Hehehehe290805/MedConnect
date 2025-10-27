@@ -18,13 +18,11 @@ const toPhTime = (date) => dayjs(date).tz("Asia/Manila");
 
 const GAP_MINUTES = 5;
 
-// ✅ Helper: convert HH:mm to dayjs Date with same day
 function applyTimeToDate(date, timeStr) {
     const [hour, minute] = timeStr.split(":").map(Number);
     return dayjs(date).hour(hour).minute(minute).second(0).millisecond(0);
 }
 
-// ✅ Helper: check overlap with 5-minute buffer
 function hasOverlap(existing, start, end) {
     const gapStart = dayjs(start).subtract(GAP_MINUTES, "minute");
     const gapEnd = dayjs(end).add(GAP_MINUTES, "minute");
@@ -40,26 +38,21 @@ export const bookAppointment = async (req, res) => {
         const providerId = doctorId || instituteId;
         const providerType = doctorId ? "doctor" : "institute";
 
+        // 1️⃣ Determine valid serviceId
         let serviceId = providedServiceId;
-
-        // ✅ Step 1: Ensure we have a valid serviceId
         if (!mongoose.Types.ObjectId.isValid(serviceId)) {
             let appointmentService = await Service.findOne({ name: "Appointment" });
-
             if (!appointmentService) {
                 appointmentService = await Service.create({
                     name: "Appointment",
                     status: "verified",
                 });
             }
-
             serviceId = appointmentService._id;
         }
 
-        // ✅ Step 2: Determine duration
-        const startTime = dayjs(start);
+        // 2️⃣ Determine duration
         let durationMinutes;
-
         if (providerType === "doctor") {
             durationMinutes = 30;
         } else {
@@ -70,9 +63,12 @@ export const bookAppointment = async (req, res) => {
             durationMinutes = serviceData.durationMinutes;
         }
 
-        const endTime = startTime.add(durationMinutes, "minute");
+        // 🚨 FIX 1: Parse time correctly - it's already in Manila timezone
+        const startTimePH = dayjs(start); // Already in Manila time with +08:00
+        const startTimeUTC = startTimePH.utc();
+        const endTimeUTC = startTimeUTC.add(durationMinutes, "minute");
 
-        // ✅ Step 3: Validate schedule
+        // 4️⃣ Validate provider schedule
         const schedule = await Schedule.findOne({
             $or: [{ doctorId }, { instituteId }],
         });
@@ -81,80 +77,86 @@ export const bookAppointment = async (req, res) => {
             return res.status(400).json({ message: "Provider schedule not found." });
         }
 
-        const dayOfWeek = startTime.day();
+        const endTimePH = endTimeUTC.tz("Asia/Manila");
+        const dayOfWeek = startTimePH.day(); // Use the parsed Manila time day
+
         if (!schedule.daysOfWeek.includes(dayOfWeek)) {
             return res.status(400).json({ message: "Booking outside provider operating days." });
         }
 
-        const dayStart = applyTimeToDate(startTime, schedule.startHour);
-        const dayEnd = applyTimeToDate(startTime, schedule.endHour);
+        const dayStart = applyTimeToDate(startTimePH, schedule.startHour);
+        const dayEnd = applyTimeToDate(startTimePH, schedule.endHour);
 
-        if (startTime.isBefore(dayStart) || endTime.isAfter(dayEnd)) {
+        if (startTimePH.isBefore(dayStart) || endTimePH.isAfter(dayEnd)) {
             return res.status(400).json({ message: "Booking out of operating hours." });
         }
 
-        // ✅ Step 4: Conflict check (provider)
+        // 5️⃣ Provider conflict check
         const providerAppointments = await Appointment.find({
             $or: [{ doctorId }, { instituteId }],
             status: { $in: ["pending_accept", "awaiting_deposit", "booked", "confirmed", "ongoing"] },
         });
-
         const providerConflict = providerAppointments.some((appt) =>
-            hasOverlap(appt, startTime, endTime)
+            hasOverlap(appt, startTimeUTC, endTimeUTC)
         );
-
         if (providerConflict) {
-            return res.status(400).json({ message: "Timeslot already taken by another booking." });
+            return res.status(400).json({ message: "Timeslot already taken." });
         }
 
-        // ✅ Step 5: Conflict check (patient)
+        // 6️⃣ Patient conflict check
         const userAppointments = await Appointment.find({
             patientId,
             status: { $in: ["pending_accept", "awaiting_deposit", "booked", "confirmed", "ongoing"] },
         });
-
         const userConflict = userAppointments.some((appt) =>
-            hasOverlap(appt, startTime, endTime)
+            hasOverlap(appt, startTimeUTC, endTimeUTC)
         );
-
         if (userConflict) {
-            return res.status(400).json({ message: "You already have a booking that overlaps with this timeslot." });
+            return res.status(400).json({ message: "You already have a booking that overlaps." });
         }
 
-        // ✅ Step 6: Pricing lookup
+        // 7️⃣ Pricing lookup
         const pricing = await Pricing.findOne({ providerId, serviceId });
         if (!pricing) {
             return res.status(400).json({ message: "Pricing not found for this service." });
         }
-
         const totalPrice = pricing.price;
         const deposit = totalPrice * 0.1;
         const balance = totalPrice - deposit;
 
-        // ✅ Step 7: Create appointment
+        // 8️⃣ Create appointment
         const appointment = await Appointment.create({
             doctorId: doctorId || null,
             instituteId: instituteId || null,
             patientId,
             serviceId,
             virtual: providerType === "doctor",
-            start: startTime.toDate(),
-            end: endTime.toDate(),
+            start: startTimeUTC.toDate(),
+            end: endTimeUTC.toDate(),
             amount: totalPrice,
             paymentDeposit: deposit,
             balanceAmount: balance,
         });
 
+
         return res.status(201).json({
             message: "Appointment booked successfully.",
-            appointment,
+            appointment: {
+                ...appointment.toObject(),
+                phTime: {
+                    start: startTimeUTC.tz("Asia/Manila").format("YYYY-MM-DD HH:mm"),
+                    end: endTimeUTC.tz("Asia/Manila").format("YYYY-MM-DD HH:mm")
+                }
+            }
         });
-
     } catch (error) {
-        console.error("Error booking appointment:", error);
+        console.error("❌ Error booking appointment:", error);
         return res.status(500).json({ message: "Internal server error." });
     }
 };
+
+
+
 
 export const payDeposit = async (req, res) => {
     try {
