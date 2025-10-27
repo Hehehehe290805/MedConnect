@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { axiosInstance } from "../lib/axios";
+import toast from "react-hot-toast";
 
 const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isReporting, setIsReporting] = useState(false);
   const [complaint, setComplaint] = useState("");
@@ -179,12 +179,14 @@ const PendingAppointment = ({ appointment, onAppointmentUpdated, onViewDetails }
         complaint: complaint.trim(),
       });
 
-      alert("Report submitted successfully");
+      toast.success("Report submitted successfully!"); // ✅ show toast
       setIsReporting(false);
       setComplaint("");
     } catch (err) {
       console.error("Error reporting:", err);
-      setError(err.response?.data?.message || "Failed to submit report");
+      const errorMsg = err.response?.data?.message || "Failed to submit report";
+      toast.error(errorMsg); // ✅ show error toast
+      setError(errorMsg);
     } finally {
       setReportLoading(false);
     }

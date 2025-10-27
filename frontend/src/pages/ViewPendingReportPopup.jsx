@@ -185,7 +185,7 @@ const ViewPendingReportPopup = ({ report, onClose, onReportResolved }) => {
                                 >
                                     <option value="">Select outcome</option>
                                     <option value="patient_right">Patient is Right</option>
-                                    <option value="doctor_right">Doctor/Institute is Right</option>
+                                    <option value="doctor_right">Doctor is Right</option>
                                     <option value="split">Split Responsibility</option>
                                 </select>
                             </div>

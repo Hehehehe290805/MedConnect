@@ -21,7 +21,7 @@ const PendingReport = ({ report, onViewDetails }) => {
                     return res.data.data; // adjust if your response shape is different
                 };
 
-                const [reported, reporter] = await Promise.allx([
+                const [reported, reporter] = await Promise.all([
                     getUser(report.filedAgainst),
                     getUser(report.filedBy)
                 ]);

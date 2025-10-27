@@ -11,7 +11,6 @@ import {
   XCircleIcon,
   AlertCircleIcon,
   ArrowLeftIcon,
-  MessageCircleIcon,
 } from "lucide-react";
 import useAuthUser from "../hooks/useAuthUser.js";
 import { axiosInstance } from "../lib/axios.js";
@@ -28,21 +27,17 @@ const OtherProfilePage = () => {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState(false);
 
-  // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === authUser?._id;
   const targetUserId = isOwnProfile ? authUser?._id : userId;
 
-  // Fetch user profile
   useEffect(() => {
     const fetchUser = async () => {
-      // If viewing own profile, use authUser data
       if (isOwnProfile && authUser) {
         setUser(authUser);
         setLoading(false);
         return;
       }
 
-      // If viewing another user's profile, fetch from API
       if (!targetUserId) return;
 
       try {
@@ -50,17 +45,11 @@ const OtherProfilePage = () => {
         setError(null);
 
         const response = await axiosInstance.get(`/users/${targetUserId}`);
+        setUser(response.data.data);
 
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch user profile");
-        }
-
-        const data = await response.json();
-        setUser(data.data);
       } catch (err) {
         console.error("Error fetching user:", err);
-        setError(err.message);
+        setError(err.response?.data?.message || "Failed to fetch user profile");
       } finally {
         setLoading(false);
       }
@@ -69,32 +58,23 @@ const OtherProfilePage = () => {
     fetchUser();
   }, [targetUserId, isOwnProfile, authUser]);
 
-// Fetch QR code for doctors and institutes
+
   useEffect(() => {
     const fetchQRCode = async () => {
       if (!user?._id || !user?.gcash?.qrData) return;
-      
-      // Only fetch QR for doctors, institutes, and pharmacists
-      if (!["doctor", "institute", "pharmacist"].includes(user.role)) return;
+      if (user.role !== "doctor") return;
 
       try {
         setQrLoading(true);
         setQrError(false);
-      
-        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${user._id}`);
 
+        const response = await axiosInstance.get(`/gcash-setup/gcash/qr/${user._id}`, {
+          responseType: "blob", 
+        });
 
+        const imageUrl = URL.createObjectURL(response.data);
+        setQrImageUrl(imageUrl);
 
-        if (response.ok) {
-          const blob = await response.blob();
-          
-          const imageUrl = URL.createObjectURL(blob);
-          setQrImageUrl(imageUrl);
-        } else {
-          const errorText = await response.text();
-          console.error('QR fetch failed:', response.status, errorText);
-          setQrError(true);
-        }
       } catch (error) {
         console.error("Error fetching QR code:", error);
         setQrError(true);
@@ -111,6 +91,7 @@ const OtherProfilePage = () => {
       }
     };
   }, [user?._id, user?.gcash?.qrData, user?.role]);
+
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -198,17 +179,6 @@ const OtherProfilePage = () => {
             <div className="badge badge-primary badge-lg mt-2">
               {capitalize(user.role || "User")}
             </div>
-
-            {/* Message Button - Only show if not viewing own profile */}
-            {!isOwnProfile && (
-              <button
-                onClick={() => navigate(`/chat/${user._id}`)}
-                className="btn btn-primary gap-2 mt-4"
-              >
-                <MessageCircleIcon className="w-5 h-5" />
-                Message
-              </button>
-            )}
           </div>
         </div>
 

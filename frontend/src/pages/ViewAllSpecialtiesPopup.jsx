@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { axiosInstance } from "../lib/axios";
+import toast from "react-hot-toast";
 
 const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [claimType, setClaimType] = useState("specialty");
@@ -8,7 +9,6 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [subspecialties, setSubspecialties] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [loading, setLoading] = useState(true);
-
 
     useEffect(() => {
         fetchSpecialties();
@@ -29,6 +29,7 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
             setSpecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching specialties:", err);
+            toast.error("Failed to load specialties");
         } finally {
             setLoading(false);
         }
@@ -41,24 +42,26 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
             setSubspecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching subspecialties:", err);
+            toast.error("Failed to load subspecialties");
         } finally {
             setLoading(false);
         }
     };
 
     const handleClaim = async () => {
-        if (!selectedItem) return alert("Please select an item to claim.");
+        if (!selectedItem) return toast.error("Please select an item to claim.");
+
         try {
             await axiosInstance.post("/specialties-and-services/claim", {
                 targetId: selectedItem._id,
                 type: claimType,
             });
 
-            alert(`Successfully claimed ${claimType}!`);
+            toast.success(`Successfully claimed ${claimType}!`);
             onClose();
         } catch (err) {
             console.error("Error claiming item:", err);
-            alert(err.response?.data?.message || "Failed to claim item.");
+            toast.error(err.response?.data?.message || "Failed to claim item.");
         }
     };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -140,10 +140,19 @@ const ViewPendingAppointmentDoctorPopup = ({ appointment, onClose, onAppointment
   const handleAttend = async () => {
     try {
       setLoading(true);
+
       const res = await axiosInstance.post(`/booking/attend/${appointment._id}`, {});
 
+      toast.success("Attendance marked successfully!"); // ✅ show success toast
       onAppointmentUpdated(res.data.appointment);
+
+      // small delay so user can see toast before closing
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (err) {
+      console.error("Error marking attendance:", err);
+      toast.error(err.response?.data?.message || "Failed to mark attendance");
     } finally {
       setLoading(false);
     }

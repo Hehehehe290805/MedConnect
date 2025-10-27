@@ -141,9 +141,6 @@ const FriendCard = ({ friend }) => {
     }
   };
 
-  const handleBookingCreated = (appointment) => {
-  };
-
   return (
     <div className="card bg-base-200 hover:shadow-md transition-shadow h-full">
       <div className="card-body p-4 flex flex-col">
@@ -152,8 +149,7 @@ const FriendCard = ({ friend }) => {
         </div>
 
         <div className="flex flex-col gap-2 mt-auto">
-          {/* Show Book Now button only for doctors and institutes */}
-          {(friend.role === "doctor" || friend.role === "institute") && (
+          {(friend.role === "doctor") && (
             <button
               onClick={() => setShowBookingPopup(true)}
               className="btn btn-primary w-full"
@@ -169,7 +165,6 @@ const FriendCard = ({ friend }) => {
         <CreateBookingPopup
           provider={friend}
           onClose={() => setShowBookingPopup(false)}
-          onBookingCreated={handleBookingCreated}
         />
       )}
     </div>

@@ -162,7 +162,7 @@ export const THEMES = [
   },
 ];
 
-export const ROLES = ["Doctor", "Institute"];
+export const ROLES = ["Doctor"];
 
 export const GENDERS = ["Male", "Female"];
 

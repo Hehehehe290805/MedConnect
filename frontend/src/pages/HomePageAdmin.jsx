@@ -227,35 +227,38 @@ const HomePageAdmin = () => {
                 <h2 className="text-xl font-bold mb-4">Pending Reports</h2>
                 {loading.reports ? (
                     <p>Loading...</p>
-                ) : pendingReports.length === 0 ? (
+                ) : pendingReports.filter(r => r.status === "pending").length === 0 ? (
                     <p>No pending reports.</p>
                 ) : (
                     <div className="flex flex-col space-y-2">
-                        {pendingReports.map((report) => {
-                            // Safely handle populated or non-populated fields
-                            const filedByName = report.filedBy
-                                ? `${report.filedBy.firstName} ${report.filedBy.lastName}`
-                                : "Unknown";
-                            const filedAgainstName = report.filedAgainst
-                                ? `${report.filedAgainst.firstName} ${report.filedAgainst.lastName}`
-                                : "Unknown";
+                        {pendingReports
+                            .filter((report) => report.status === "pending")
+                            .map((report) => {
+                                // Safely handle populated or non-populated fields
+                                const filedByName = report.filedBy
+                                    ? `${report.filedBy.firstName} ${report.filedBy.lastName}`
+                                    : "Unknown";
+                                const filedAgainstName = report.filedAgainst
+                                    ? `${report.filedAgainst.firstName} ${report.filedAgainst.lastName}`
+                                    : "Unknown";
 
-                            return (
-                                <PendingReport
-                                    key={report._id}
-                                    report={{
-                                        ...report,
-                                        filedByName,
-                                        filedAgainstName,
-                                    }}
-                                    onViewDetails={openReportModal}
-                                    onReportResolved={handleReportResolved}
-                                />
-                            );
-                        })}
+                                return (
+                                    <PendingReport
+                                        key={report._id}
+                                        report={{
+                                            ...report,
+                                            filedByName,
+                                            filedAgainstName,
+                                        }}
+                                        onViewDetails={openReportModal}
+                                        onReportResolved={handleReportResolved}
+                                    />
+                                );
+                            })}
                     </div>
                 )}
             </section>
+
 
 
             {/* Modals */}

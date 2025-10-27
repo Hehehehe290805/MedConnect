@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { axiosInstance } from "../lib/axios";
 import dayjs from "dayjs";
+import toast from "react-hot-toast";
 
 const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
     const [loading, setLoading] = useState(false);
@@ -58,7 +59,6 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
         fetchAvailableSlots();
     }, [provider._id]);
 
-    // 🧾 Handle booking
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -73,15 +73,20 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
 
             const bookingData = {
                 doctorId: provider._id,
-                serviceId: "appointment", // fixed since dropdown is locked
+                serviceId: "appointment",
                 start: selectedSlot.start,
             };
 
             const res = await axiosInstance.post("/booking/book", bookingData);
 
-
             if (res.data.message === "Appointment booked successfully.") {
-                onBookingCreated(res.data.appointment);
+                toast.success("Appointment booked successfully!");
+
+                if (typeof onBookingCreated === "function") {
+                    onBookingCreated(res.data.appointment);
+                }
+
+                // Close the modal immediately
                 onClose();
             }
         } catch (err) {
@@ -91,6 +96,8 @@ const CreateBookingPopup = ({ provider, onClose, onBookingCreated }) => {
             setLoading(false);
         }
     };
+
+
 
     const getProviderName = () =>
         provider.role === "doctor"
