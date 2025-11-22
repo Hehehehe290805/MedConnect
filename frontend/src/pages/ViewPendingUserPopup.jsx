@@ -48,14 +48,6 @@ const ViewPendingUserPopup = ({ user, onClose, onUserApproved }) => {
                         <p><strong>License Number:</strong> {user.licenseNumber}</p>
                     </>
                 );
-            case "institute":
-                return (
-                    <>
-                        <p><strong>Facility Name:</strong> {user.facilityName}</p>
-                        <p><strong>Pending Role:</strong> {user.role}</p>
-                        <p><strong>Location:</strong> {user.location || "-"}</p>
-                    </>
-                );
             case "admin":
                 return (
                     <>
