@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 import ViewAllSpecialtiesPopup from "./ViewAllSpecialtiesPopup";
 import SuggestPopup from "./SuggestPopup"; // import the Suggest popup
 
@@ -21,11 +21,8 @@ const SpecialtyPage = () => {
     useEffect(() => {
         const fetchSpecialties = async () => {
             try {
-                const API_URL = import.meta.env.VITE_API_URL || "";
-                const res = await axios.get(
-                    `${API_URL}/api/specialties-and-services/doctor-specialties`,
-                    { withCredentials: true }
-                );
+                const res = await axiosInstance.get("/specialties-and-services/doctor-specialties");
+
 
                 setVerified(res.data.verified || []);
                 setPending(res.data.pending || []);

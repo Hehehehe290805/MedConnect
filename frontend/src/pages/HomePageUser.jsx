@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios.js";
 import PendingAppointment from "../components/PendingAppointment.jsx";
 import ViewPendingAppointmentPatientPopup from "./ViewPendingAppointmentPatientPopup.jsx";
 
@@ -16,10 +16,8 @@ const HomePageUser = ({ currentUser }) => {
         setLoading(true);
         setError(null);
 
-        const API_URL = import.meta.env.VITE_API_URL || "";
-        const res = await axios.get(`${API_URL}/api/booking/user-appointments`, {
-          withCredentials: true,
-        });
+        const res = await axiosInstance.get("/booking/user-appointments");
+
 
         if (res.data.success && Array.isArray(res.data.appointments)) {
           const validStatuses = [

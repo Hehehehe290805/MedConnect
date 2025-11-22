@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import { axiosInstance } from "../lib/axios";
 
 const PendingReport = ({ report, onViewDetails }) => {
     const [reportedUser, setReportedUser] = useState(null);
@@ -12,13 +12,12 @@ const PendingReport = ({ report, onViewDetails }) => {
             try {
                 setLoading(true);
 
-                const API_URL = import.meta.env.VITE_API_URL || "";
-
                 // If already populated, use directly; otherwise fetch by ID
                 const getUser = async (user) => {
                     if (!user) return { firstName: "Unknown", lastName: "", facilityName: null };
                     if (typeof user === "object" && user.firstName) return user;
-                    const res = await axios.get(`${API_URL}/api/users/${user}`, { withCredentials: true });
+
+                    const res = await axiosInstance.get(`/users/${user}`);
                     return res.data.data; // adjust if your response shape is different
                 };
 

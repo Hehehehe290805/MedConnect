@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const SetPricePopup = ({ onClose, onPriceSet, currentPrice }) => {
     const [price, setPrice] = useState(currentPrice || "");
@@ -18,24 +18,18 @@ const SetPricePopup = ({ onClose, onPriceSet, currentPrice }) => {
             setLoading(true);
             setError("");
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
 
             try {
-                await axios.post(
-                    `${API_URL}/api/specialties-and-services/auto-claim-appointment`,
-                    {},
-                    { withCredentials: true }
-                );
+                await axiosInstance.post("/specialties-and-services/auto-claim-appointment", {});
+
             } catch (err) {
                 console.warn("⚠️ Auto-claim skipped or failed:", err.response?.data?.message || err.message);
             }
 
-            const res = await axios.post(
-                `${API_URL}/api/pricing/set-pricing`,
-                { price: parseFloat(price) },
-                { withCredentials: true }
-            );
-
+            const res = await axiosInstance.post("/pricing/set-pricing", {
+                price: parseFloat(price),
+            });
+            
             if (res.data.message === "Pricing set/updated successfully") {
                 onPriceSet(parseFloat(price));
                 onClose();

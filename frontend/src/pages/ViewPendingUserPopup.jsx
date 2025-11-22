@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const ViewPendingUserPopup = ({ user, onClose, onUserApproved }) => {
     const [loading, setLoading] = useState(false);
@@ -14,13 +14,9 @@ const ViewPendingUserPopup = ({ user, onClose, onUserApproved }) => {
             setError(null);
             setSuccess(false);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
 
-            const res = await axios.patch(
-                `${API_URL}/api/admin/approve-role`,
-                { userId: user._id },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.patch(`/admin/approve-role`, { userId: user._id });
+
 
             if (res.data.success) {
                 setSuccess(true);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const SetSchedulePopup = ({ onClose, onScheduleSet, currentSchedule }) => {
     const [formData, setFormData] = useState({
@@ -77,16 +77,9 @@ const SetSchedulePopup = ({ onClose, onScheduleSet, currentSchedule }) => {
             setLoading(true);
             setError("");
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            console.log("Making POST request to:", `${API_URL}/api/doctor-schedule/availability`);
-            console.log("Request data:", formData);
+            const res = await axiosInstance.post("/doctor-schedule/availability", formData);
 
-            const res = await axios.post(`${API_URL}/api/doctor-schedule/availability`,
-                formData,
-                { withCredentials: true }
-            );
 
-            console.log("Schedule API response:", res.data);
 
             if (res.data.success) {
                 onScheduleSet(res.data.availability);

@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router";
 import { Toaster } from "react-hot-toast";
-import React from "react";
 
 // Pages
 import HomePageUser from "./pages/HomePageUser.jsx";

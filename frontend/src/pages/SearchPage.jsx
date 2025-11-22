@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SearchIcon, AlertCircleIcon } from "lucide-react";
 import FriendCard from "../components/FriendCard.jsx";
 import FilterSearch from "../components/FilterSearch.jsx";
+import { axiosInstance } from "../lib/axios.js";
 
 const SearchPage = () => {
   const [loading, setLoading] = useState(false);
@@ -10,41 +11,20 @@ const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({});
 
-  const fetchUsers = async () => {
+  const fetchDoctors = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [doctorsRes, institutesRes] = await Promise.all([
-        fetch("http://localhost:5001/api/users/doctors", {
-          method: "GET",
-          credentials: "include",
-        }),
-        fetch("http://localhost:5001/api/users/institutes", {
-          method: "GET",
-          credentials: "include",
-        }),
-      ]);
+      const res = await axiosInstance.get("/users/doctors");
 
-      if (!doctorsRes.ok || !institutesRes.ok) {
-        const errText = `${!doctorsRes.ok ? "Doctors" : ""} ${
-          !institutesRes.ok ? "Institutes" : ""
-        } fetch failed`;
-        throw new Error(`Failed to fetch one or more user groups (${errText})`);
-      }
+      if (!res.data) throw new Error("Failed to fetch doctors");
 
-      const [doctorsData, institutesData] = await Promise.all([
-        doctorsRes.json(),
-        institutesRes.json(),
-      ]);
-
-      const doctors = doctorsData.data || [];
-      const institutes = institutesData.data || [];
-
-      setResults([...doctors, ...institutes]);
+      const doctors = res.data.data || [];
+      setResults(doctors);
     } catch (err) {
-      console.error("Error fetching users:", err);
-      setError(err.message || "Failed to fetch users");
+      console.error("Error fetching doctors:", err);
+      setError(err.message || "Failed to fetch doctors");
     } finally {
       setLoading(false);
     }
@@ -52,89 +32,85 @@ const SearchPage = () => {
 
   // Filtering logic
   const filteredResults = results.filter((item) => {
-  // Search query filter
-  const search = query.toLowerCase();
-  const matchesSearch =
-    !query ||
-    item.firstName?.toLowerCase().includes(search) ||
-    item.lastName?.toLowerCase().includes(search) ||
-    item.facilityName?.toLowerCase().includes(search) ||
-    item.role?.toLowerCase().includes(search) ||
-    item.location?.toLowerCase().includes(search) ||
-    item.profession?.toLowerCase().includes(search);
+    const search = query.toLowerCase();
+    const matchesSearch =
+      !query ||
+      item.firstName?.toLowerCase().includes(search) ||
+      item.lastName?.toLowerCase().includes(search) ||
+      item.role?.toLowerCase().includes(search) ||
+      item.location?.toLowerCase().includes(search) ||
+      item.profession?.toLowerCase().includes(search);
 
-  // Individual filter checks
-  const matchesRole =
-    filters.roles?.length === 0 ||
-    filters.roles?.some(
-      (role) => item.role?.toLowerCase() === role.toLowerCase()
-    );
+    const matchesRole =
+      filters.roles?.length === 0 ||
+      filters.roles?.some(
+        (role) => item.role?.toLowerCase() === role.toLowerCase()
+      );
 
-  const matchesGender =
-    filters.genders?.length === 0 ||
-    filters.genders?.some(
-      (gender) => item.sex?.toLowerCase() === gender.toLowerCase()
-    );
+    const matchesGender =
+      filters.genders?.length === 0 ||
+      filters.genders?.some(
+        (gender) => item.sex?.toLowerCase() === gender.toLowerCase()
+      );
 
-  // For "Match All" mode, check if item has ALL selected languages
-  const matchesLanguages =
-    filters.languages?.length === 0 ||
-    (filters.matchMode === "all"
-      ? filters.languages.every((lang) => item.languages?.includes(lang))
-      : filters.languages.some((lang) => item.languages?.includes(lang)));
+    const matchesLanguages =
+      filters.languages?.length === 0 ||
+      (filters.matchMode === "all"
+        ? filters.languages.every((lang) => item.languages?.includes(lang))
+        : filters.languages.some((lang) => item.languages?.includes(lang)));
 
-  const matchesLocation =
-    filters.locations?.length === 0 ||
-    (filters.matchMode === "all"
-      ? filters.locations.every((loc) =>
+    const matchesLocation =
+      filters.locations?.length === 0 ||
+      (filters.matchMode === "all"
+        ? filters.locations.every((loc) =>
           item.location?.toLowerCase().includes(loc.toLowerCase())
         )
-      : filters.locations.some((loc) =>
+        : filters.locations.some((loc) =>
           item.location?.toLowerCase().includes(loc.toLowerCase())
         ));
 
-  const matchesProfession =
-    !filters.profession ||
-    item.profession?.toLowerCase().includes(filters.profession.toLowerCase());
+    const matchesProfession =
+      !filters.profession ||
+      item.profession?.toLowerCase().includes(filters.profession.toLowerCase());
 
-  const matchesPrice =
-    (!filters.minPrice || (item.pricing?.amount || 0) >= filters.minPrice) &&
-    (!filters.maxPrice || (item.pricing?.amount || 0) <= filters.maxPrice);
+    const matchesPrice =
+      (!filters.minPrice || (item.pricing?.amount || 0) >= filters.minPrice) &&
+      (!filters.maxPrice || (item.pricing?.amount || 0) <= filters.maxPrice);
 
-  const matchesService =
-    !filters.service ||
-    item.services?.some((s) =>
-      s.name?.toLowerCase().includes(filters.service.toLowerCase())
+    const matchesService =
+      !filters.service ||
+      item.services?.some((s) =>
+        s.name?.toLowerCase().includes(filters.service.toLowerCase())
+      );
+
+    const matchesSpecialty =
+      !filters.specialty ||
+      item.specialties?.some((s) =>
+        s.name?.toLowerCase().includes(filters.specialty.toLowerCase())
+      );
+
+    const matchesSubspecialty =
+      !filters.subspecialty ||
+      item.subspecialties?.some((s) =>
+        s.name?.toLowerCase().includes(filters.subspecialty.toLowerCase())
+      );
+
+    return (
+      matchesSearch &&
+      matchesRole &&
+      matchesGender &&
+      matchesLanguages &&
+      matchesLocation &&
+      matchesProfession &&
+      matchesPrice &&
+      matchesService &&
+      matchesSpecialty &&
+      matchesSubspecialty
     );
-
-  const matchesSpecialty =
-    !filters.specialty ||
-    item.specialties?.some((s) =>
-      s.name?.toLowerCase().includes(filters.specialty.toLowerCase())
-    );
-
-  const matchesSubspecialty =
-    !filters.subspecialty ||
-    item.subspecialties?.some((s) =>
-      s.name?.toLowerCase().includes(filters.subspecialty.toLowerCase())
-    );
-
-  return (
-    matchesSearch &&
-    matchesRole &&
-    matchesGender &&
-    matchesLanguages &&
-    matchesLocation &&
-    matchesProfession &&
-    matchesPrice &&
-    matchesService &&
-    matchesSpecialty &&
-    matchesSubspecialty
-  );
-});
+  });
 
   useEffect(() => {
-    fetchUsers();
+    fetchDoctors();
   }, []);
 
   return (
@@ -142,7 +118,7 @@ const SearchPage = () => {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4">
-          <h1 className="text-3xl font-bold">Find Users & Professionals</h1>
+          <h1 className="text-3xl font-bold">Find Professionals</h1>
 
           {/* Search bar and Filter */}
           <div className="flex flex-col md:flex-row gap-3">

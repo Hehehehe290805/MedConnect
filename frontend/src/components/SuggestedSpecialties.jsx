@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import { axiosInstance } from "../lib/axios";
 import SuggestedSpecialtyPopup from "../SuggestedSpecialtyPopup";
 
 const GroupItem = ({ item, onView }) => (
@@ -23,11 +23,7 @@ const SuggestedSpecialties = () => {
         const fetchSuggestedSpecialties = async () => {
             try {
                 setLoading(true);
-                const API_URL = import.meta.env.VITE_API_URL || "";
-                const res = await axios.get(
-                    `${API_URL}/api/specialties-and-services/doctor-specialties`,
-                    { withCredentials: true }
-                );
+                const res = await axiosInstance.get("/specialties-and-services/doctor-specialties");
 
                 // Only take suggested/pending group (group2)
                 setItems(res.data.group2 || []);

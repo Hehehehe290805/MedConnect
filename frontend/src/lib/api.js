@@ -90,41 +90,12 @@ export async function getUserById(userId) {
 
 export const uploadGCashQR = async (formData) => {
   try {
+    const response = await axiosInstance.post("/gcash-setup/gcash/upload", formData);
 
-    const response = await fetch('http://localhost:5001/api/gcash-setup/gcash/upload', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
-
-
-    // Get the response as text first to see what we're getting
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      // If it's HTML, the route doesn't exist
-      if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html>')) {
-        throw new Error('API route not found. Check backend route configuration.');
-      }
-
-      // Try to parse as JSON for structured errors
-      try {
-        const errorData = JSON.parse(responseText);
-        throw new Error(errorData.message || `Upload failed: ${response.status}`);
-      } catch (e) {
-        throw new Error(`Server error: ${response.status} - ${responseText}`);
-      }
-    }
-
-    // Parse successful JSON response
-    try {
-      return JSON.parse(responseText);
-    } catch (e) {
-      throw new Error('Server returned invalid JSON response');
-    }
-
-  } catch (error) {
-    console.error('GCash upload error:', error);
-    throw error;
+    // Axios already parses the response body
+    return response.data;
+  } catch (err) {
+    console.error("GCash upload error:", err);
+    throw err;
   }
 };

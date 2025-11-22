@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import { upsertStreamUser } from "../lib/stream.js";
 
 // ✅ Signup
 export const signup = async (req, res) => {

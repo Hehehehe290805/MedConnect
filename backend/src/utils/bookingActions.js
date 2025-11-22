@@ -1,5 +1,4 @@
 import axios from "axios";
-import dayjs from "dayjs";
 
 /**
  * Rules for which user acts at each appointment phase

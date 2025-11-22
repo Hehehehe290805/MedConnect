@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
+import toast from "react-hot-toast";
 
 const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [claimType, setClaimType] = useState("specialty");
@@ -8,8 +9,6 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const [subspecialties, setSubspecialties] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    const API_URL = import.meta.env.VITE_API_URL || "";
 
     useEffect(() => {
         fetchSpecialties();
@@ -26,10 +25,11 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const fetchSpecialties = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/specialties-and-services/specialties`, { withCredentials: true });
+            const res = await axiosInstance.get("/specialties-and-services/specialties");
             setSpecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching specialties:", err);
+            toast.error("Failed to load specialties");
         } finally {
             setLoading(false);
         }
@@ -38,27 +38,30 @@ const ViewAllSpecialtiesPopup = ({ onClose }) => {
     const fetchSubspecialties = async (specialtyId) => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/specialties-and-services/subspecialties/${specialtyId}`, { withCredentials: true });
+            const res = await axiosInstance.get(`/specialties-and-services/subspecialties/${specialtyId}`);
             setSubspecialties(res.data.items || []);
         } catch (err) {
             console.error("Error fetching subspecialties:", err);
+            toast.error("Failed to load subspecialties");
         } finally {
             setLoading(false);
         }
     };
 
     const handleClaim = async () => {
-        if (!selectedItem) return alert("Please select an item to claim.");
+        if (!selectedItem) return toast.error("Please select an item to claim.");
+
         try {
-            await axios.post(`${API_URL}/api/specialties-and-services/claim`, {
+            await axiosInstance.post("/specialties-and-services/claim", {
                 targetId: selectedItem._id,
                 type: claimType,
-            }, { withCredentials: true });
-            alert(`Successfully claimed ${claimType}!`);
+            });
+
+            toast.success(`Successfully claimed ${claimType}!`);
             onClose();
         } catch (err) {
             console.error("Error claiming item:", err);
-            alert(err.response?.data?.message || "Failed to claim item.");
+            toast.error(err.response?.data?.message || "Failed to claim item.");
         }
     };
 

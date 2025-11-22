@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAuthUser from "../hooks/useAuthUser.js";
 import { Trash2Icon, AlertTriangleIcon, XIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../lib/axios.js";
 
 const SettingsPage = () => {
   const { authUser } = useAuthUser();
@@ -22,26 +23,21 @@ const SettingsPage = () => {
   // Delete account mutation
   const { mutate: deleteAccount, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await fetch("http://localhost:5001/api/auth/delete-me", {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await axiosInstance.delete("/auth/delete-me");
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete account");
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(response.data?.message || "Failed to delete account");
       }
 
-      return response.json();
+      return response.data; 
     },
     onSuccess: () => {
       toast.success("Account deleted successfully");
-      queryClient.clear(); // Clear all cached data
-      
-      // Force a full page reload to the login page
+      queryClient.clear(); 
+
       setTimeout(() => {
-        window.location.href = "/login"; // Hard redirect + reload
-      }, 1000); // Small delay to show the success toast
+        window.location.href = "/login"; 
+      }, 1000); 
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete account");

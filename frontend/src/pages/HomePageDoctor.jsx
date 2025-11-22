@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios.js";
 import PendingAppointment from "../components/PendingAppointment.jsx";
 import ViewPendingAppointmentDoctorPopup from "./ViewPendingAppointmentDoctorPopup.jsx";
 import SetPricePopup from "./SetPricePopup.jsx";
 import SetSchedulePopup from "./SetSchedulePopup.jsx";
+import toast from "react-hot-toast";
 
 const HomePageDoctor = () => {
     const [appointments, setAppointments] = useState([]);
@@ -21,8 +22,8 @@ const HomePageDoctor = () => {
 
     useEffect(() => {
         fetchAppointments();
-        fetchCurrentPricing();
-        fetchCurrentSchedule();
+        fetchCurrentSchedule();    
+        fetchCurrentPrice();
     }, []);
 
     // === Fetch functions ===
@@ -30,8 +31,7 @@ const HomePageDoctor = () => {
         try {
             setLoading(true);
             setError(null);
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/booking/user-appointments`, { withCredentials: true });
+            const res = await axiosInstance.get("/booking/user-appointments");
 
             if (res.data.success && Array.isArray(res.data.appointments)) {
                 const validStatuses = [
@@ -57,25 +57,20 @@ const HomePageDoctor = () => {
         }
     };
 
-    const fetchCurrentPricing = async () => {
+    const fetchCurrentPrice = async () => {
         try {
-            setPriceLoading(true);
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/pricing/pricing`, { withCredentials: true });
-            if (res.data.pricing && res.data.pricing.length > 0) {
-                setCurrentPrice(res.data.pricing[0].price);
-            }
+            const res = await axiosInstance.get("/pricing/appointment-price");
+            const price = res.data.pricing?.[0]?.price ?? null;
+            setCurrentPrice(price);
         } catch (err) {
-            console.error("Error fetching pricing:", err);
-        } finally {
-            setPriceLoading(false);
+            console.error("Error fetching current price:", err);
+            toast.error("Failed to fetch current price");
         }
     };
 
     const fetchCurrentSchedule = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.get(`${API_URL}/api/doctor-schedule/get-availability`, { withCredentials: true });
+            const res = await axiosInstance.get("/doctor-schedule/get-availability");
             if (res.data.success && res.data.availability) {
                 setCurrentSchedule(res.data.availability);
                 setWorkTime(formatScheduleDisplay(res.data.availability));
@@ -109,13 +104,36 @@ const HomePageDoctor = () => {
 
     // === Handlers ===
     const handleSetNewPrice = () => setShowPricePopup(true);
-    const handlePriceSet = (newPrice) => setCurrentPrice(newPrice);
+    const handlePriceSet = async (newPrice) => {
+        try {
+            await axiosInstance.post("/pricing/set-pricing", { price: newPrice });
+
+            const res = await axiosInstance.get("/pricing/appointment-price");
+
+            const confirmedPrice = res.data.pricing?.[0]?.price;
+
+            if (confirmedPrice !== undefined) {
+                setCurrentPrice(confirmedPrice);
+                toast.success(`Price updated to ₱${confirmedPrice}`);
+            } else {
+                setCurrentPrice(null);
+                toast.success("Price updated (no price found in DB)");
+            }
+
+            setShowPricePopup(false);
+
+        } catch (err) {
+            console.error("Error updating price:", err);
+            toast.error("Failed to update price");
+        }
+    };
+
+
 
     const handleSetWorkTime = () => setShowSchedulePopup(true);
     const handleScheduleSet = async (schedule) => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.post(`${API_URL}/api/doctor-schedule/availability`, schedule, { withCredentials: true });
+            const res = await axiosInstance.post("/doctor-schedule/availability", schedule);
             if (res.data.success) {
                 setCurrentSchedule(res.data.availability);
                 setWorkTime(formatScheduleDisplay(res.data.availability));

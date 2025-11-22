@@ -1,5 +1,3 @@
-import React from "react";
-
 const PendingUser = ({ user, onViewDetails }) => {
     return (
         <div className="flex items-center justify-between p-4 border rounded shadow-sm bg-base-100 mb-2">

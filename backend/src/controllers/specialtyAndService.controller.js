@@ -366,7 +366,6 @@ export async function autoClaimAppointmentService(req, res) {
             });
         }
 
-        console.log("Creating auto-claim for doctor:", userId, "service:", appointmentService._id);
 
         const autoClaim = await Institute_Service.create({
             doctorId: userId,
@@ -377,7 +376,6 @@ export async function autoClaimAppointmentService(req, res) {
             durationMinutes: 30
         });
 
-        console.log("Created:", autoClaim);
 
         res.status(201).json({
             success: true,

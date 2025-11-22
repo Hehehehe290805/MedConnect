@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 
 const ViewPendingSuggestionPopup = ({ suggestion, onClose, onSuggestionApproved }) => {
     const [loading, setLoading] = useState(false);
@@ -12,11 +12,8 @@ const ViewPendingSuggestionPopup = ({ suggestion, onClose, onSuggestionApproved 
         const fetchRootSpecialtyName = async () => {
             if (suggestion.type === "subspecialty" && suggestion._id) {
                 try {
-                    const API_URL = import.meta.env.VITE_API_URL || "";
-                    const res = await axios.get(
-                        `${API_URL}/api/specialties-and-services/subspecialty-root/${suggestion._id}`,
-                        { withCredentials: true }
-                    );
+                    const res = await axiosInstance.get(`/specialties-and-services/subspecialty-root/${suggestion._id}`);
+
                     setRootSpecialtyName(res.data.name || "Unknown");
                 } catch (err) {
                     console.error("Failed to fetch root specialty:", err);
@@ -36,12 +33,8 @@ const ViewPendingSuggestionPopup = ({ suggestion, onClose, onSuggestionApproved 
             setError(null);
             setSuccess(false);
 
-            const API_URL = import.meta.env.VITE_API_URL || "";
-            const res = await axios.patch(
-                `${API_URL}/api/admin/approve`,
-                { id: suggestion._id },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.patch(`/admin/approve`, { id: suggestion._id });
+
 
             if (res.data.message) {
                 setSuccess(true);
